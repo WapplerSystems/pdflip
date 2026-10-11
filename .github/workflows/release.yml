@@ -36,7 +36,11 @@ jobs:
         run: |
           # Trusted Publishing needs npm ≥ 11.5.1
           npm install -g npm@latest
-          if npm view "pdflip@$VERSION" version >/dev/null 2>&1; then
+          if ! npm view pdflip name >/dev/null 2>&1; then
+            # npm only allows a trusted publisher for packages that already exist,
+            # so the very first version has to be published by hand
+            echo "::warning::pdflip does not exist on npm yet; publish the first version by hand, then add the trusted publisher."
+          elif npm view "pdflip@$VERSION" version >/dev/null 2>&1; then
             echo "pdflip@$VERSION is already on npm, skipping."
           else
             npm publish --access public
@@ -47,5 +51,7 @@ jobs:
         run: |
           # release notes: the section of this version in CHANGELOG.md
           awk -v v="$VERSION" '/^## /{p = index($0, v) > 0; next} p' CHANGELOG.md > notes.md
+          # the npm tarball, installable with `npm install <url>` independently of the registry
+          npm pack --silent
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
-            || gh release create "$GITHUB_REF_NAME" --title "pdflip $VERSION" --notes-file notes.md
+            || gh release create "$GITHUB_REF_NAME" --title "pdflip $VERSION" --notes-file notes.md "pdflip-$VERSION.tgz"
