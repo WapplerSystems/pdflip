@@ -1,0 +1,850 @@
+/*!
+ * pdflip — open-source PDF flip book
+ * Theme with the custom properties below; everything else is layout.
+ */
+.pdflip {
+  --pdflip-color: #1f2328;
+  --pdflip-muted: #59636e;
+  --pdflip-surface: #ffffff;
+  --pdflip-toolbar-background: rgb(255 255 255 / 0.94);
+  --pdflip-border: rgb(31 35 40 / 0.15);
+  --pdflip-accent: #0b5cad;
+  --pdflip-accent-contrast: #ffffff;
+  --pdflip-highlight: rgb(255 196 0 / 0.45);
+  --pdflip-highlight-active: rgb(255 120 0 / 0.55);
+  --pdflip-page-shadow: 0 2px 14px rgb(0 0 0 / 0.22);
+  --pdflip-radius: 6px;
+  --pdflip-button-size: 2.5rem;
+  --pdflip-panel-width: 17rem;
+  --pdflip-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 12rem;
+  color: var(--pdflip-color);
+  background: var(--pdflip-background, transparent);
+  font-family: var(--pdflip-font);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  outline: none;
+}
+
+.pdflip[data-theme="dark"],
+.pdflip-lightbox .pdflip {
+  --pdflip-color: #e6edf3;
+  --pdflip-muted: #9198a1;
+  --pdflip-surface: #1c2128;
+  --pdflip-toolbar-background: rgb(22 27 34 / 0.94);
+  --pdflip-border: rgb(230 237 243 / 0.18);
+  --pdflip-accent: #4493f8;
+  --pdflip-accent-contrast: #0d1117;
+}
+
+.pdflip:focus-visible {
+  outline: 2px solid var(--pdflip-accent);
+  outline-offset: 2px;
+}
+
+.pdflip *,
+.pdflip *::before,
+.pdflip *::after {
+  box-sizing: border-box;
+}
+
+.pdflip[data-controls="top"] {
+  flex-direction: column-reverse;
+}
+
+/* ------------------------------------------------------------------ main area */
+
+.pdflip-main {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pdflip-viewport {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+.pdflip-viewport.is-zoomed {
+  cursor: grab;
+}
+
+.pdflip-viewport.is-zoomed:active {
+  cursor: grabbing;
+}
+
+.pdflip-stage {
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.pdflip-book {
+  position: relative;
+  perspective: 3000px;
+}
+
+.pdflip-book.is-rtl,
+.pdflip-book.is-rtl .pdflip-page-content {
+  transform: scaleX(-1);
+}
+
+/* ------------------------------------------------------------------ pages */
+
+.pdflip-page {
+  position: absolute;
+  top: 0;
+  width: var(--pdflip-page-width);
+  height: var(--pdflip-page-height);
+  background: #fff;
+  box-shadow: var(--pdflip-page-shadow);
+}
+
+.pdflip-page.is-empty {
+  visibility: hidden;
+}
+
+.pdflip-slot-left {
+  left: 0;
+}
+
+.pdflip-slot-right {
+  left: var(--pdflip-page-width);
+}
+
+.pdflip-book.is-single .pdflip-slot-left {
+  display: none;
+}
+
+.pdflip-book.is-single .pdflip-slot-right {
+  left: 0;
+}
+
+/* closed book: the cover alone in the middle */
+.pdflip-book.is-front-cover .pdflip-slot-left,
+.pdflip-book.is-back-cover .pdflip-slot-right {
+  box-shadow: none;
+}
+
+/* paper curving into the spine */
+.pdflip-book.is-double .pdflip-page:not(.is-empty)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pdflip-book.is-double .pdflip-slot-left::after {
+  background: linear-gradient(to left, rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.04) 4%, transparent 9%);
+}
+
+.pdflip-book.is-double .pdflip-slot-right::after {
+  background: linear-gradient(to right, rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.04) 4%, transparent 9%);
+}
+
+.pdflip-page.is-loading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    linear-gradient(100deg, transparent 30%, rgb(0 0 0 / 0.05) 50%, transparent 70%) 0 0 / 200% 100%;
+  animation: pdflip-shimmer 1.4s linear infinite;
+}
+
+@keyframes pdflip-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.pdflip-page-content {
+  position: absolute;
+  inset: 0;
+}
+
+.pdflip-page-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pdflip-links,
+.pdflip-highlights {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pdflip-link {
+  position: absolute;
+  pointer-events: auto;
+  border-radius: 2px;
+}
+
+.pdflip-link:hover,
+.pdflip-link:focus-visible {
+  background: rgb(11 92 173 / 0.12);
+  outline: 2px solid rgb(11 92 173 / 0.5);
+}
+
+.pdflip-highlight {
+  position: absolute;
+  background: var(--pdflip-highlight);
+  mix-blend-mode: multiply;
+  border-radius: 2px;
+}
+
+.pdflip-highlight.is-active {
+  background: var(--pdflip-highlight-active);
+}
+
+/* ------------------------------------------------------------------ the turning sheet */
+
+.pdflip-turn {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.pdflip-turn[hidden] {
+  display: none;
+}
+
+.pdflip-face,
+.pdflip-shade,
+.pdflip-hard-leaf {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--pdflip-page-width);
+  height: var(--pdflip-page-height);
+}
+
+.pdflip-face {
+  overflow: hidden;
+  background: #fff;
+}
+
+.pdflip-face.is-empty {
+  background: #f4f2ee;
+}
+
+.pdflip-turn-back {
+  transform-origin: 0 0;
+}
+
+.pdflip-turn-back-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  filter: drop-shadow(0 0 8px rgb(0 0 0 / 0.28));
+}
+
+.pdflip-turn-back-wrap[hidden],
+.pdflip-shade[hidden] {
+  display: none;
+}
+
+.pdflip-shade {
+  overflow: hidden;
+  z-index: 1;
+}
+
+.pdflip-shade-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.pdflip-shade-cast {
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / calc(0.42 * (1 - var(--pdflip-progress, 0)))) 0,
+    rgb(0 0 0 / 0) var(--pdflip-shade-width, 60px)
+  );
+}
+
+.pdflip-shade-crease {
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0.2) 0,
+    rgb(0 0 0 / 0.05) calc(var(--pdflip-shade-width, 60px) * 0.25),
+    rgb(0 0 0 / 0) calc(var(--pdflip-shade-width, 60px) * 0.6)
+  );
+}
+
+.pdflip-shade-back {
+  z-index: 4;
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0.2) 0,
+    rgb(255 255 255 / 0.08) calc(var(--pdflip-shade-width, 60px) * 0.5),
+    rgb(0 0 0 / 0) var(--pdflip-shade-width, 60px),
+    rgb(0 0 0 / 0.06) 100%
+  );
+}
+
+.pdflip-turn:not(.is-hard) .pdflip-hard-leaf,
+.pdflip-turn.is-hard > :not(.pdflip-hard-leaf) {
+  display: none;
+}
+
+.pdflip-hard-leaf {
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+}
+
+.pdflip-hard-leaf .pdflip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: var(--pdflip-page-shadow);
+}
+
+.pdflip-hard-leaf .pdflip-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / calc(0.25 * var(--pdflip-light, 0)));
+}
+
+.pdflip-hard-back {
+  transform: rotateY(180deg);
+}
+
+/* ------------------------------------------------------------------ text layer (pdf.js) */
+
+.pdflip-text {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.pdflip-viewport.is-zoomed .pdflip-text {
+  pointer-events: auto;
+}
+
+.pdflip-text :is(span, br) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.pdflip-text > :not(.markedContent),
+.pdflip-text .markedContent span:not(.markedContent) {
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.pdflip-text .markedContent {
+  display: contents;
+}
+
+.pdflip-text ::selection {
+  background: rgb(0 90 200 / 0.25);
+}
+
+/* ------------------------------------------------------------------ toolbar */
+
+.pdflip-toolbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--pdflip-toolbar-background);
+  border-top: 1px solid var(--pdflip-border);
+}
+
+.pdflip[data-controls="top"] .pdflip-toolbar {
+  border-top: 0;
+  border-bottom: 1px solid var(--pdflip-border);
+}
+
+.pdflip-toolbar[hidden] {
+  display: none;
+}
+
+.pdflip-toolbar-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.pdflip-toolbar-group:empty {
+  display: none;
+}
+
+.pdflip-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pdflip-button-size);
+  height: var(--pdflip-button-size);
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--pdflip-radius);
+  cursor: pointer;
+}
+
+.pdflip-button:hover:not(:disabled) {
+  background: rgb(127 127 127 / 0.15);
+}
+
+.pdflip-button:focus-visible,
+.pdflip-thumbnail:focus-visible,
+.pdflip-popover-item:focus-visible {
+  outline: 2px solid var(--pdflip-accent);
+  outline-offset: -2px;
+}
+
+.pdflip-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pdflip-button[aria-pressed="true"] {
+  color: var(--pdflip-accent-contrast);
+  background: var(--pdflip-accent);
+}
+
+.pdflip-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pdflip-page-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  color: var(--pdflip-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pdflip-page-input {
+  width: 4.5em;
+  padding: 0.25rem 0.375rem;
+  color: var(--pdflip-color);
+  font: inherit;
+  text-align: center;
+  background: var(--pdflip-surface);
+  border: 1px solid var(--pdflip-border);
+  border-radius: var(--pdflip-radius);
+}
+
+.pdflip-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  padding: 0.25rem;
+  background: var(--pdflip-surface);
+  border: 1px solid var(--pdflip-border);
+  border-radius: var(--pdflip-radius);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.pdflip[data-controls="top"] .pdflip-popover {
+  top: calc(100% + 0.5rem);
+  bottom: auto;
+}
+
+.pdflip-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--pdflip-radius) - 2px);
+  cursor: pointer;
+}
+
+.pdflip-popover-item:hover {
+  background: rgb(127 127 127 / 0.15);
+}
+
+.pdflip-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* small books: only the essentials stay in the toolbar */
+@container (max-width: 34rem) {
+  .pdflip-button-first,
+  .pdflip-button-last,
+  .pdflip-button-zoomIn,
+  .pdflip-button-zoomOut,
+  .pdflip-button-sound,
+  .pdflip-button-pageMode,
+  .pdflip-button-autoplay {
+    display: none;
+  }
+
+  .pdflip-toolbar {
+    justify-content: center;
+  }
+}
+
+/* ------------------------------------------------------------------ side panel */
+
+.pdflip-panel {
+  display: flex;
+  flex: 0 0 var(--pdflip-panel-width);
+  flex-direction: column;
+  width: var(--pdflip-panel-width);
+  overflow: auto;
+  background: var(--pdflip-surface);
+  border-right: 1px solid var(--pdflip-border);
+  overscroll-behavior: contain;
+}
+
+.pdflip-panel[hidden] {
+  display: none;
+}
+
+@container (max-width: 45rem) {
+  .pdflip-panel {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 8;
+    max-width: 85%;
+    box-shadow: 4px 0 24px rgb(0 0 0 / 0.2);
+  }
+}
+
+.pdflip-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+  background: var(--pdflip-surface);
+  border-bottom: 1px solid var(--pdflip-border);
+}
+
+.pdflip-panel-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pdflip-panel-empty {
+  padding: 0.75rem;
+  color: var(--pdflip-muted);
+}
+
+.pdflip-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem;
+  list-style: none;
+}
+
+.pdflip-thumbnail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.25rem;
+  color: var(--pdflip-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: var(--pdflip-radius);
+  cursor: pointer;
+}
+
+.pdflip-thumbnail canvas {
+  display: block;
+  width: 100%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+}
+
+.pdflip-thumbnail[aria-current="page"] {
+  color: var(--pdflip-accent);
+  border-color: var(--pdflip-accent);
+}
+
+.pdflip-outline {
+  padding: 0.5rem 0;
+}
+
+.pdflip-outline-list {
+  margin: 0;
+  padding: 0 0 0 0.75rem;
+  list-style: none;
+}
+
+.pdflip-outline > .pdflip-outline-list {
+  padding-left: 0;
+}
+
+.pdflip-outline :is(button, a) {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--pdflip-radius);
+  cursor: pointer;
+}
+
+.pdflip-outline :is(button, a):hover:not(:disabled) {
+  background: rgb(127 127 127 / 0.15);
+}
+
+.pdflip-outline button:disabled {
+  cursor: default;
+}
+
+.pdflip-search {
+  padding: 0.75rem 0.75rem 0;
+}
+
+.pdflip-search-input {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  color: var(--pdflip-color);
+  font: inherit;
+  background: var(--pdflip-surface);
+  border: 1px solid var(--pdflip-border);
+  border-radius: var(--pdflip-radius);
+}
+
+.pdflip-search-summary {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  color: var(--pdflip-muted);
+  font-size: 0.8125rem;
+}
+
+.pdflip-search-results {
+  margin: 0;
+  padding: 0 0.5rem 0.75rem;
+  list-style: none;
+}
+
+.pdflip-search-hit {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--pdflip-radius);
+  cursor: pointer;
+}
+
+.pdflip-search-hit:hover,
+.pdflip-search-hit.is-active {
+  background: rgb(127 127 127 / 0.15);
+}
+
+.pdflip-search-page {
+  display: block;
+  color: var(--pdflip-muted);
+  font-size: 0.75rem;
+}
+
+.pdflip-search-snippet mark {
+  color: inherit;
+  background: var(--pdflip-highlight);
+}
+
+/* ------------------------------------------------------------------ states */
+
+.pdflip-loader {
+  position: absolute;
+  inset: 50% 20% auto;
+  height: 4px;
+  overflow: hidden;
+  background: var(--pdflip-border);
+  border-radius: 2px;
+}
+
+.pdflip-loader-bar {
+  width: calc(var(--pdflip-loaded, 0.1) * 100%);
+  height: 100%;
+  background: var(--pdflip-accent);
+  transition: width 0.2s;
+}
+
+.pdflip-error {
+  margin: auto;
+  padding: 1rem;
+  color: var(--pdflip-muted);
+  text-align: center;
+}
+
+.pdflip.is-fullscreen,
+.pdflip:fullscreen {
+  width: 100%;
+  height: 100%;
+  background: var(--pdflip-fullscreen-background, #2b2f33);
+}
+
+.pdflip:fullscreen .pdflip-main,
+.pdflip.is-pseudo-fullscreen .pdflip-main {
+  height: auto !important;
+}
+
+.pdflip.is-pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+}
+
+/* ------------------------------------------------------------------ lightbox */
+
+.pdflip-lightbox {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  color: #e6edf3;
+  background: rgb(13 17 23 / 0.94);
+  border: 0;
+}
+
+.pdflip-lightbox::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.pdflip-lightbox-book {
+  height: 100%;
+}
+
+.pdflip-lightbox .pdflip-main {
+  height: auto !important;
+}
+
+.pdflip-lightbox-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 30;
+  color: #fff;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.pdflip-lightbox-close:hover {
+  background: rgb(0 0 0 / 0.7) !important;
+}
+
+html.pdflip-lightbox-open {
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ triggers & dFlip markup */
+
+[data-pdflip-lightbox],
+._df_thumb,
+._df_button {
+  cursor: pointer;
+}
+
+._df_thumb.pdflip-compat {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 10rem;
+  margin: 0 1rem 1rem 0;
+  vertical-align: top;
+}
+
+._df_thumb.pdflip-compat img {
+  display: block;
+  width: 100%;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.2);
+  transition: transform 0.2s;
+}
+
+._df_thumb.pdflip-compat:hover img {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdflip *,
+  .pdflip-lightbox * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

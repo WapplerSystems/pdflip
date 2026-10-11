@@ -1,0 +1,76 @@
+{
+  "name": "pdflip",
+  "version": "0.1.0",
+  "description": "Open-source PDF flip book for the web — page-turning PDF viewer without jQuery, built on pdf.js",
+  "keywords": [
+    "pdf",
+    "flipbook",
+    "flip-book",
+    "page-flip",
+    "pdfjs",
+    "viewer",
+    "magazine",
+    "brochure"
+  ],
+  "homepage": "https://github.com/WapplerSystems/pdflip",
+  "bugs": {
+    "url": "https://github.com/WapplerSystems/pdflip/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WapplerSystems/pdflip.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": "Sven Wappler <typo3@wappler.systems>",
+  "type": "module",
+  "module": "./dist/pdflip.mjs",
+  "types": "./dist/pdflip.d.ts",
+  "unpkg": "./dist/pdflip.global.js",
+  "jsdelivr": "./dist/pdflip.global.js",
+  "exports": {
+    ".": {
+      "types": "./dist/pdflip.d.ts",
+      "import": "./dist/pdflip.mjs"
+    },
+    "./pdflip.css": "./dist/pdflip.css",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/copy-assets.mjs",
+    "dev": "tsup --watch",
+    "demo": "pnpm build && node demos/serve.mjs",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "biome check .",
+    "check:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm typecheck && pnpm lint && pnpm test:run && pnpm build"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^6.4.299"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^24.19.2",
+    "happy-dom": "^20.14.6",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  },
+  "packageManager": "pnpm@10.31.0",
+  "engines": {
+    "node": ">=22"
+  }
+}
