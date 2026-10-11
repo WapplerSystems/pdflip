@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 – unreleased
+## 0.1.0 – 2026-10-11
 
 First version: soft and hard page turn, single/double pages, RTL, zoom and pan, thumbnails,
 outline, full-text search with exact highlights, selectable text, PDF links, lightbox,

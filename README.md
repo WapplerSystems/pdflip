@@ -175,6 +175,18 @@ pnpm run check      # typecheck, lint, unit tests, build
 
 A DDEV configuration is included: `ddev start`, then open `https://pdflip.ddev.site/demos/`.
 
+## Releasing
+
+Bump `version` in `package.json`, add the section to `CHANGELOG.md`, then tag:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The `Release` workflow checks and builds the tag, publishes it to npm via Trusted Publishing
+(with provenance, no token) and creates the GitHub release. The CI of `main` updates the
+TYPO3 extension (`WapplerSystems/t3-pdflip`) independently of releases.
+
 ## License
 
 BSD-3-Clause © WapplerSystems. pdf.js is Apache-2.0 (Mozilla), see `dist/pdfjs/LICENSE`.
