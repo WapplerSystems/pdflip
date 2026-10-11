@@ -11,7 +11,7 @@ const page = await browser.newPage({
 const logs = [];
 page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
-await page.goto(url + '?_cb=' + Date.now());
+await page.goto(`${url}?_cb=${Date.now()}`);
 await page
   .waitForSelector('#katalog.is-ready', { timeout: 15000 })
   .catch(() => logs.push('katalog not ready'));

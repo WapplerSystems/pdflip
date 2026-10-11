@@ -9,7 +9,7 @@ const page = await browser.newPage({
 const logs = [];
 page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
-await page.goto('https://pdflip.ddev.site/demos/index.html?_cb=' + Date.now());
+await page.goto(`https://pdflip.ddev.site/demos/index.html?_cb=${Date.now()}`);
 await page.waitForSelector('#katalog.is-ready');
 await page.waitForTimeout(800);
 const book = page.locator('#katalog');

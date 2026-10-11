@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, lint, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test:run
+      - run: pnpm build
+      - name: Bundle size
+        run: |
+          SIZE=$(stat -c%s dist/pdflip.global.js)
+          echo "pdflip.global.js: $SIZE bytes" >> "$GITHUB_STEP_SUMMARY"
+          # guard against accidentally bundling pdf.js or other large dependencies
+          test "$SIZE" -lt 150000
+      - uses: actions/upload-artifact@v6
+        with:
+          name: dist
+          path: dist
+          retention-days: 14
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist
+          path: dist
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+  # Tells the TYPO3 extension (WapplerSystems/t3-pdflip) to take over the new build.
+  # Needs the secret T3_PDFLIP_DISPATCH_TOKEN: a fine-grained token for
+  # WapplerSystems/t3-pdflip with "Contents: read and write".
+  notify-extension:
+    name: Notify TYPO3 extension
+    runs-on: ubuntu-latest
+    needs: [check, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Dispatch pdflip-build to t3-pdflip
+        env:
+          TOKEN: ${{ secrets.T3_PDFLIP_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::T3_PDFLIP_DISPATCH_TOKEN is not set, the extension is not updated automatically."
+            exit 0
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/WapplerSystems/t3-pdflip/dispatches \
+            -d "{\"event_type\":\"pdflip-build\",\"client_payload\":{\"sha\":\"${GITHUB_SHA}\"}}"
