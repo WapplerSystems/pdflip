@@ -98,9 +98,30 @@
   perspective: 3000px;
 }
 
+.pdflip-book {
+  transition: transform 0.45s ease;
+}
+
 .pdflip-book.is-rtl,
 .pdflip-book.is-rtl .pdflip-page-content {
   transform: scaleX(-1);
+}
+
+/* a closed book sits in the middle and slides aside when it is opened */
+.pdflip-book.is-double.is-front-cover {
+  transform: translateX(-25%);
+}
+
+.pdflip-book.is-double.is-back-cover {
+  transform: translateX(25%);
+}
+
+.pdflip-book.is-rtl.is-double.is-front-cover {
+  transform: translateX(25%) scaleX(-1);
+}
+
+.pdflip-book.is-rtl.is-double.is-back-cover {
+  transform: translateX(-25%) scaleX(-1);
 }
 
 /* ------------------------------------------------------------------ pages */
@@ -780,7 +801,7 @@
   margin: 0;
   padding: 0;
   color: #e6edf3;
-  background: rgb(13 17 23 / 0.94);
+  background: #0d1117;
   border: 0;
 }
 

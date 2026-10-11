@@ -420,8 +420,12 @@ export class BookView {
     } else {
       this.setSlot(1, turn.under);
     }
-    this.book.classList.toggle('is-front-cover', this.double && turn.left === null);
-    this.book.classList.toggle('is-back-cover', this.double && turn.under === null);
+    if (!this.hovering) {
+      // the closed book slides to the side while it opens (and back while it closes)
+      const target = this.spreads[turn.to]?.pages ?? [];
+      this.book.classList.toggle('is-front-cover', this.double && target[0] === null);
+      this.book.classList.toggle('is-back-cover', this.double && target[1] === null);
+    }
     this.turnLayer.hidden = false;
     this.turnLayer.classList.toggle('is-hard', turn.hard);
     this.turnLayer.classList.toggle('is-single', !this.double);
