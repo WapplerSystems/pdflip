@@ -39,17 +39,17 @@ That is all: every element with `data-pdflip` becomes a flip book.
 ## Installation
 
 ```bash
-npm install pdflip
+npm install @wapplersystems/pdflip
 ```
 
-Copy `node_modules/pdflip/dist/` to your public assets, or use a CDN. The `pdfjs/` folder must
+Copy `node_modules/@wapplersystems/pdflip/dist/` to your public assets, or use a CDN. The `pdfjs/` folder must
 stay next to `pdflip.global.js` (or configure its location, see `pdfjs` below).
 
 ### As ES module
 
 ```js
-import { Flipbook } from 'pdflip';
-import 'pdflip/pdflip.css';
+import { Flipbook } from '@wapplersystems/pdflip';
+import '@wapplersystems/pdflip/pdflip.css';
 import * as pdfjs from 'pdfjs-dist';
 
 const book = new Flipbook(document.querySelector('#book'), {

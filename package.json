@@ -1,5 +1,5 @@
 {
-  "name": "pdflip",
+  "name": "@wapplersystems/pdflip",
   "version": "0.1.0",
   "description": "Open-source PDF flip book for the web — page-turning PDF viewer without jQuery, built on pdf.js",
   "keywords": [
@@ -39,6 +39,9 @@
   "sideEffects": [
     "*.css"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "README.md",
