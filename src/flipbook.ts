@@ -4,6 +4,7 @@ import { format, type Labels, resolveLabels } from './i18n';
 import { resolveOptions } from './options';
 import { ImageSource } from './source/images';
 import { PdfSource } from './source/pdf';
+import { isSpread, SplitSource, splitParts } from './source/split';
 import type { PageSource } from './source/types';
 import type {
   ControlName,
@@ -12,6 +13,7 @@ import type {
   PageMode,
   PdflipInit,
   PdflipOptions,
+  PdflipSource,
 } from './types';
 import { type IconName, icon } from './ui/icons';
 import { type SearchHit, searchDocument } from './ui/search';
@@ -158,19 +160,28 @@ export class Flipbook {
     });
   }
 
+  private async openPdf(source: Exclude<PdflipSource, string[]>): Promise<PageSource> {
+    const pdf = await PdfSource.open(
+      source,
+      this.options.pdfjs,
+      this.options.rangeChunkSize,
+      (ratio) => this.loader.style.setProperty('--pdflip-loaded', String(ratio)),
+      this.options.password,
+      !this.options.prefetch
+    );
+    // Reading every page size costs a request per few pages, so only when page 2 is a spread.
+    if (!this.options.splitSpreads || pdf.pageCount < 2) return pdf;
+    if (!isSpread(await pdf.loadPageSize(2), pdf.pageSize(1))) return pdf;
+    const parts = splitParts(await pdf.allPageSizes());
+    return parts ? new SplitSource(pdf, parts) : pdf;
+  }
+
   private async load(): Promise<Flipbook> {
     try {
       const { source } = this.options;
       this.source = Array.isArray(source)
         ? await ImageSource.open(source)
-        : await PdfSource.open(
-            source,
-            this.options.pdfjs,
-            this.options.rangeChunkSize,
-            (ratio) => this.loader.style.setProperty('--pdflip-loaded', String(ratio)),
-            this.options.password,
-            !this.options.prefetch
-          );
+        : await this.openPdf(source);
       if (this.destroyed) {
         this.source.destroy();
         return this;

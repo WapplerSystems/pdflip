@@ -7,7 +7,8 @@ import type {
 } from 'pdfjs-dist/types/src/display/api';
 import type { OutlineItem, PdfjsOptions } from '../types';
 import { resolveAsset } from '../util/base-url';
-import type { PageImage, PageLink, PageSize, PageSource, TextRun } from './types';
+import type { Half, HalvableSource } from './split';
+import type { PageImage, PageLink, PageSize, TextRun } from './types';
 
 type PdfjsModule = typeof import('pdfjs-dist');
 
@@ -78,7 +79,7 @@ interface OutlineNode {
   items: OutlineNode[];
 }
 
-export class PdfSource implements PageSource {
+export class PdfSource implements HalvableSource {
   private readonly sizes: PageSize[] = [];
   private readonly pages = new Map<number, Promise<PDFPageProxy>>();
   private readonly texts = new Map<number, Promise<TextContent>>();
@@ -155,6 +156,20 @@ export class PdfSource implements PageSource {
     return this.sizes[page - 1] ?? this.sizes[0] ?? { width: 595, height: 842 };
   }
 
+  /** Reads the real size of one page. */
+  async loadPageSize(page: number): Promise<PageSize> {
+    await this.page(page);
+    return this.pageSize(page);
+  }
+
+  /** Reads the real size of every page (the page dictionaries only, not their content). */
+  async allPageSizes(): Promise<PageSize[]> {
+    await Promise.all(
+      Array.from({ length: this.document.numPages }, (_, index) => this.page(index + 1))
+    );
+    return [...this.sizes];
+  }
+
   private page(page: number): Promise<PDFPageProxy> {
     let promise = this.pages.get(page);
     if (!promise) {
@@ -168,13 +183,23 @@ export class PdfSource implements PageSource {
     return promise;
   }
 
-  async render(page: number, height: number, signal?: AbortSignal): Promise<PageImage> {
+  async render(
+    page: number,
+    height: number,
+    signal?: AbortSignal,
+    half?: Half
+  ): Promise<PageImage> {
     const proxy = await this.page(page);
     signal?.throwIfAborted();
     const base = proxy.getViewport({ scale: 1 });
-    const viewport = proxy.getViewport({ scale: height / base.height });
+    const scale = height / base.height;
+    // a half is the whole page drawn into a canvas half as wide, shifted for the right one
+    const viewport = proxy.getViewport({
+      scale,
+      offsetX: half === 'right' ? -(base.width * scale) / 2 : 0,
+    });
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.floor(viewport.width));
+    canvas.width = Math.max(1, Math.floor(half ? viewport.width / 2 : viewport.width));
     canvas.height = Math.max(1, Math.floor(viewport.height));
     const task = proxy.render({ canvas, viewport, background: '#ffffff' });
     const abort = () => task.cancel();
@@ -281,14 +306,31 @@ export class PdfSource implements PageSource {
     return runs;
   }
 
-  async renderTextLayer(page: number, container: HTMLElement): Promise<void> {
+  async renderTextLayer(page: number, container: HTMLElement, half?: Half): Promise<void> {
     const [proxy, content] = await Promise.all([this.page(page), this.text(page)]);
-    const layer = new this.pdfjs.TextLayer({
-      textContentSource: content,
-      container,
-      viewport: proxy.getViewport({ scale: 1 }),
+    const base = proxy.getViewport({ scale: 1 });
+    const viewport = proxy.getViewport({
+      scale: 1,
+      offsetX: half === 'right' ? -base.width / 2 : 0,
     });
+    let source = content;
+    if (half) {
+      // only the text of this half, the other one would lie over the neighbouring page
+      source = {
+        ...content,
+        items: content.items.filter((item) => {
+          if (!('str' in item)) return true;
+          const m = this.pdfjs.Util.transform(viewport.transform, item.transform) as number[];
+          const centre = m[4]! + (item.width * viewport.scale) / 2;
+          return centre >= 0 && centre < base.width / 2;
+        }),
+      };
+    }
+    const layer = new this.pdfjs.TextLayer({ textContentSource: source, container, viewport });
     await layer.render();
+    if (half) {
+      container.style.width = `calc(var(--total-scale-factor) * ${base.width / 2}px)`;
+    }
   }
 
   destroy(): void {

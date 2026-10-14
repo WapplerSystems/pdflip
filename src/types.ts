@@ -146,6 +146,11 @@ export interface PdflipOptions {
    * ranges as they are needed.
    */
   prefetch: boolean;
+  /**
+   * Show pages that hold two printed pages side by side (magazines exported as spreads after a
+   * portrait cover) as two pages. Detected from the second page.
+   */
+  splitSpreads: boolean;
   pdfjs: PdfjsOptions;
   /** UI language, `auto` follows `<html lang>`. */
   locale: string;

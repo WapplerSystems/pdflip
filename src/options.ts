@@ -46,6 +46,7 @@ export const defaults: Omit<PdflipOptions, 'source'> = {
   lazy: true,
   rangeChunkSize: 65536 * 8,
   prefetch: false,
+  splitSpreads: true,
   pdfjs: {},
   locale: 'auto',
 };
@@ -78,6 +79,7 @@ const booleanOptions = new Set([
   'textLayer',
   'lazy',
   'prefetch',
+  'splitSpreads',
 ]);
 const numberOptions = new Set([
   'startPage',
