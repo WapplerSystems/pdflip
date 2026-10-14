@@ -28,6 +28,49 @@ export function loadPdfjs(options: PdfjsOptions): Promise<PdfjsModule> {
   return pdfjsPromise;
 }
 
+/**
+ * Loads a PDF through byte-range requests only. pdf.js on its own starts with a plain GET and
+ * cancels it once the headers show range support; on a fast line large files arrive whole before
+ * that. Without range support the first response already is the whole file.
+ */
+async function rangeTarget(
+  pdfjs: PdfjsModule,
+  url: string,
+  options: PdfjsOptions,
+  chunkSize: number
+): Promise<
+  | { range: InstanceType<PdfjsModule['PDFDataRangeTransport']> }
+  | { data: Uint8Array }
+  | { url: string }
+> {
+  const request = (begin: number, end: number) =>
+    fetch(url, {
+      headers: { ...options.httpHeaders, Range: `bytes=${begin}-${end - 1}` },
+      credentials: options.withCredentials ? 'include' : 'same-origin',
+    });
+  const response = await request(0, chunkSize);
+  if (response.status === 200) {
+    return { data: new Uint8Array(await response.arrayBuffer()) };
+  }
+  const length = Number(response.headers.get('Content-Range')?.split('/')[1]);
+  if (response.status !== 206 || !Number.isFinite(length) || length <= 0) {
+    // Content-Range not readable (cross-origin without exposed header): leave it to pdf.js.
+    await response.body?.cancel();
+    return { url };
+  }
+  const transport = new pdfjs.PDFDataRangeTransport(
+    length,
+    new Uint8Array(await response.arrayBuffer())
+  );
+  transport.requestDataRange = (begin: number, end: number) => {
+    request(begin, end)
+      .then((part) => part.arrayBuffer())
+      .then((data) => transport.onDataRange(begin, new Uint8Array(data)))
+      .catch(() => transport.abort());
+  };
+  return { range: transport };
+}
+
 interface OutlineNode {
   title: string;
   url: string | null;
@@ -51,17 +94,20 @@ export class PdfSource implements PageSource {
     options: PdfjsOptions,
     rangeChunkSize: number,
     onProgress?: (ratio: number) => void,
-    password?: string | (() => string | Promise<string>)
+    password?: string | (() => string | Promise<string>),
+    onlyNeeded = false
   ): Promise<PdfSource> {
     const pdfjs = await loadPdfjs(options);
     const target =
-      input instanceof Blob
-        ? { data: new Uint8Array(await input.arrayBuffer()) }
-        : input instanceof ArrayBuffer
-          ? { data: new Uint8Array(input) }
-          : input instanceof Uint8Array
-            ? { data: input }
-            : { url: String(input) };
+      onlyNeeded && !options.disableRange && (typeof input === 'string' || input instanceof URL)
+        ? await rangeTarget(pdfjs, String(input), options, rangeChunkSize)
+        : input instanceof Blob
+          ? { data: new Uint8Array(await input.arrayBuffer()) }
+          : input instanceof ArrayBuffer
+            ? { data: new Uint8Array(input) }
+            : input instanceof Uint8Array
+              ? { data: input }
+              : { url: String(input) };
     const task = pdfjs.getDocument({
       ...target,
       disableRange: options.disableRange ?? false,
@@ -74,6 +120,9 @@ export class PdfSource implements PageSource {
       wasmUrl: options.wasmUrl ?? resolveAsset('pdfjs/wasm/'),
       iccUrl: options.iccUrl ?? resolveAsset('pdfjs/iccs/'),
       rangeChunkSize,
+      // A book prefetches the whole file so turning pages stays fast; a gallery cover needs one
+      // page and fetches only the ranges it reads.
+      disableAutoFetch: onlyNeeded,
     });
     if (onProgress) {
       task.onProgress = ({ loaded, total }: { loaded: number; total: number }) => {

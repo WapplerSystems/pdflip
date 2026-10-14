@@ -150,7 +150,7 @@ export async function renderCover(image: HTMLImageElement): Promise<void> {
   const observer = new IntersectionObserver(async (entries) => {
     if (!entries.some((entry) => entry.isIntersecting)) return;
     observer.disconnect();
-    const source = await PdfSource.open(url, {}, 65536);
+    const source = await PdfSource.open(url, {}, 65536, undefined, undefined, true);
     const width = Math.max(200, image.clientWidth || 300) * (window.devicePixelRatio || 1);
     const size = source.pageSize(1);
     const canvas = (await source.render(
