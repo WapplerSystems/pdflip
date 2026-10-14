@@ -168,7 +168,8 @@ export class Flipbook {
             this.options.pdfjs,
             this.options.rangeChunkSize,
             (ratio) => this.loader.style.setProperty('--pdflip-loaded', String(ratio)),
-            this.options.password
+            this.options.password,
+            !this.options.prefetch
           );
       if (this.destroyed) {
         this.source.destroy();

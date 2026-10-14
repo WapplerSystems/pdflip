@@ -140,6 +140,12 @@ export interface PdflipOptions {
   lazy: boolean;
   /** Byte range chunk size for progressive PDF loading. */
   rangeChunkSize: number;
+  /**
+   * Download the whole PDF in the background once the first pages are shown. Page turns never
+   * wait for the network, but every visitor loads the full file. Off: pages are fetched in byte
+   * ranges as they are needed.
+   */
+  prefetch: boolean;
   pdfjs: PdfjsOptions;
   /** UI language, `auto` follows `<html lang>`. */
   locale: string;

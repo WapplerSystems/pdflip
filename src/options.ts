@@ -45,6 +45,7 @@ export const defaults: Omit<PdflipOptions, 'source'> = {
   maxTextureSize: 4096,
   lazy: true,
   rangeChunkSize: 65536 * 8,
+  prefetch: false,
   pdfjs: {},
   locale: 'auto',
 };
@@ -76,6 +77,7 @@ const booleanOptions = new Set([
   'links',
   'textLayer',
   'lazy',
+  'prefetch',
 ]);
 const numberOptions = new Set([
   'startPage',

@@ -110,6 +110,7 @@ initialisation.
 | `linkTarget` | `_blank` | Target of external links |
 | `textLayer` | `true` | Selectable text (active while zoomed, so dragging still turns pages) |
 | `lazy` | `true` | Load when the book comes near the viewport |
+| `prefetch` | `false` | Load the whole PDF in the background (page turns never wait, but every visitor loads the full file); off: pages are fetched in byte ranges as needed |
 | `maxTextureSize` | `4096` | Upper limit of the rendered page height in device pixels |
 | `locale` | `auto` | `en`, `de`, `fr`; `auto` follows `<html lang>` |
 | `labels` | – | Override single texts |

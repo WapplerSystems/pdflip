@@ -120,8 +120,8 @@ export class PdfSource implements PageSource {
       wasmUrl: options.wasmUrl ?? resolveAsset('pdfjs/wasm/'),
       iccUrl: options.iccUrl ?? resolveAsset('pdfjs/iccs/'),
       rangeChunkSize,
-      // A book prefetches the whole file so turning pages stays fast; a gallery cover needs one
-      // page and fetches only the ranges it reads.
+      // Only the ranges of the pages that are read (books by default, gallery covers), or the
+      // whole file in the background (option `prefetch`).
       disableAutoFetch: onlyNeeded,
     });
     if (onProgress) {
