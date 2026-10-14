@@ -16,6 +16,7 @@ import type {
 import { type IconName, icon } from './ui/icons';
 import { type SearchHit, searchDocument } from './ui/search';
 import { el, uniqueId } from './util/dom';
+import { isBookHash, parseHash } from './util/hash';
 import { FlipSound } from './util/sound';
 import { BookView } from './view/book-view';
 import type { PageView } from './view/page-view';
@@ -961,18 +962,16 @@ export class Flipbook {
 
   private pageFromHash(): number | undefined {
     if (!this.options.deepLink) return undefined;
-    const match = window.location.hash.match(/^#pdflip-(.+)\/(\d+)$/);
-    if (!match || decodeURIComponent(match[1]!) !== this.id) return undefined;
-    return Number(match[2]);
+    const target = parseHash();
+    if (!target || (target.id !== this.id && target.id !== this.root.dataset.pdflipLegacyId))
+      return undefined;
+    return target.page;
   }
 
   private updateHash(): void {
     if (!this.options.deepLink) return;
     const hash = `#pdflip-${encodeURIComponent(this.id)}/${this.page}`;
-    if (
-      window.location.hash !== hash &&
-      (window.location.hash === '' || window.location.hash.startsWith('#pdflip-'))
-    ) {
+    if (window.location.hash !== hash && (window.location.hash === '' || isBookHash())) {
       history.replaceState(history.state, '', hash);
     }
   }

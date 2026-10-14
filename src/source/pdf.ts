@@ -72,6 +72,7 @@ export class PdfSource implements PageSource {
       cMapPacked: true,
       standardFontDataUrl: options.standardFontDataUrl ?? resolveAsset('pdfjs/standard_fonts/'),
       wasmUrl: options.wasmUrl ?? resolveAsset('pdfjs/wasm/'),
+      iccUrl: options.iccUrl ?? resolveAsset('pdfjs/iccs/'),
       rangeChunkSize,
     });
     if (onProgress) {

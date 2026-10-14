@@ -3,6 +3,7 @@ import { resolveLabels } from './i18n';
 import type { PdflipInit } from './types';
 import { icon } from './ui/icons';
 import { el } from './util/dom';
+import { isBookHash } from './util/hash';
 
 let open: { dialog: HTMLDialogElement; book: Flipbook; trigger: Element | null } | undefined;
 
@@ -67,7 +68,7 @@ export function closeLightbox(fromHistory = false): void {
   if (pushed) {
     // drop the entry added on open; the page below keeps its own URL
     history.back();
-  } else if (window.location.hash.startsWith('#pdflip-')) {
+  } else if (isBookHash()) {
     history.replaceState(history.state, '', window.location.pathname + window.location.search);
   }
   if (current.trigger instanceof HTMLElement) current.trigger.focus();

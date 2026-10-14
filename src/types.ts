@@ -53,6 +53,8 @@ export interface PdfjsOptions {
   standardFontDataUrl?: string;
   /** Directory with the wasm decoders (JBIG2, JPEG 2000). */
   wasmUrl?: string;
+  /** Directory with the ICC profiles for CMYK colours. */
+  iccUrl?: string;
   /** An already imported pdf.js module (`import * as pdfjs from 'pdfjs-dist'`), skips loading `src`. */
   lib?: unknown;
   /**

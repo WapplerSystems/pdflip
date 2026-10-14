@@ -3,6 +3,7 @@ import { openLightbox } from './lightbox';
 import { optionsFromElement } from './options';
 import { PdfSource } from './source/pdf';
 import type { PdflipInit } from './types';
+import { elementForHashId, parseHash } from './util/hash';
 
 /**
  * Markup API — no JavaScript needed:
@@ -162,12 +163,12 @@ export async function renderCover(image: HTMLImageElement): Promise<void> {
   observer.observe(image);
 }
 
-/** `#pdflip-<id>/<page>` pointing at a lightbox trigger opens it on that page. */
+/** A deep link (also one shared from dFlip) pointing at a lightbox trigger opens it on that page. */
 function openFromHash(): void {
-  const match = window.location.hash.match(/^#pdflip-(.+)\/(\d+)$/);
-  if (!match) return;
-  const trigger = document.getElementById(decodeURIComponent(match[1]!));
+  const target = parseHash();
+  if (!target) return;
+  const trigger = elementForHashId(target.id);
   if (!trigger || Flipbook.get(trigger)) return;
   const init = lightboxOptions(trigger);
-  if (init) openLightbox({ ...init, startPage: Number(match[2]) }, trigger);
+  if (init) openLightbox({ ...init, startPage: target.page }, trigger);
 }

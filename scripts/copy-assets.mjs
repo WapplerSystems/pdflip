@@ -14,7 +14,7 @@ mkdirSync(target, { recursive: true });
 for (const file of ['build/pdf.min.mjs', 'build/pdf.worker.min.mjs']) {
   cpSync(join(pdfjsRoot, file), join(target, file.split('/').pop()));
 }
-for (const directory of ['cmaps', 'standard_fonts', 'wasm']) {
+for (const directory of ['cmaps', 'standard_fonts', 'wasm', 'iccs']) {
   cpSync(join(pdfjsRoot, directory), join(target, directory), { recursive: true });
 }
 cpSync(join(pdfjsRoot, 'LICENSE'), join(target, 'LICENSE'));

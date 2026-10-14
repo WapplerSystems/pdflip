@@ -113,7 +113,7 @@ initialisation.
 | `maxTextureSize` | `4096` | Upper limit of the rendered page height in device pixels |
 | `locale` | `auto` | `en`, `de`, `fr`; `auto` follows `<html lang>` |
 | `labels` | – | Override single texts |
-| `pdfjs` | – | `src`, `workerSrc`, `cMapUrl`, `standardFontDataUrl`, `wasmUrl`, `lib`, `disableRange`, `httpHeaders`, `withCredentials` |
+| `pdfjs` | – | `src`, `workerSrc`, `cMapUrl`, `standardFontDataUrl`, `wasmUrl`, `iccUrl`, `lib`, `disableRange`, `httpHeaders`, `withCredentials` |
 | `onReady`, `beforeFlip`, `onFlip` | – | Callbacks; `beforeFlip` may return `false` to cancel |
 
 ## API
